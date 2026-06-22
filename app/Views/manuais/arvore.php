@@ -137,25 +137,31 @@ $sidebar_manual = $manual;
                     <?php $hasAnexos = ! empty($cap['anexos']); ?>
 
                     <?php if ($hasAnexos): ?>
-                    <!-- Capítulo com anexos: clicável para expandir -->
+                    <!-- Capítulo com anexos: título abre leitura, chevron expande lista de anexos -->
                     <div class="tree-capitulo-header"
                          data-target="cap-<?= $cap['id'] ?>"
                          aria-expanded="false">
                         <i class="bi bi-file-earmark-text" style="color:#2e7d32;"></i>
                         <span class="badge-capitulo">Cap. <?= $cap['numero'] ?></span>
-                        <span class="capitulo-titulo"><?= esc($cap['titulo']) ?></span>
+                        <a href="<?= base_url("manuais/capitulo/{$cap['id']}") ?>"
+                           class="capitulo-titulo capitulo-link"
+                           title="Ler Cap. <?= $cap['numero'] ?> — <?= esc($cap['titulo']) ?>"
+                           onclick="event.stopPropagation()"><?= esc($cap['titulo']) ?></a>
                         <span style="font-size:.72rem;color:#999;" class="me-1">
                             <?= count($cap['anexos']) ?> anx.
                         </span>
                         <i class="bi bi-chevron-right toggle-chevron" style="font-size:.7rem;color:#999;margin-left:auto;transition:transform .2s;"></i>
                     </div>
                     <?php else: ?>
-                    <!-- Capítulo sem anexos: link direto (quando implementado) -->
-                    <div class="tree-capitulo-header">
+                    <!-- Capítulo sem anexos: link direto para a leitura -->
+                    <a href="<?= base_url("manuais/capitulo/{$cap['id']}") ?>"
+                       class="tree-capitulo-header tree-capitulo-header--link"
+                       title="Ler Cap. <?= $cap['numero'] ?> — <?= esc($cap['titulo']) ?>">
                         <i class="bi bi-file-earmark-text" style="color:#2e7d32;"></i>
                         <span class="badge-capitulo">Cap. <?= $cap['numero'] ?></span>
                         <span class="capitulo-titulo"><?= esc($cap['titulo']) ?></span>
-                    </div>
+                        <i class="bi bi-arrow-right" style="font-size:.75rem;color:#999;margin-left:auto;"></i>
+                    </a>
                     <?php endif; ?>
 
                     <!-- Anexos do capítulo -->
@@ -163,11 +169,14 @@ $sidebar_manual = $manual;
                     <ul class="tree-anexo-list d-none" id="cap-<?= $cap['id'] ?>">
                         <?php foreach ($cap['anexos'] as $anx): ?>
                         <li class="tree-anexo-item">
-                            <span class="tree-anexo-link">
+                            <a href="<?= base_url("manuais/anexo/{$anx['id']}") ?>"
+                               class="tree-anexo-link"
+                               title="Ler Anexo <?= esc($anx['numero']) ?> — <?= esc($anx['titulo']) ?>">
                                 <i class="bi bi-paperclip" style="color:#b45309;"></i>
                                 <span class="badge-anexo">Anx. <?= $anx['numero'] ?></span>
                                 <span><?= esc($anx['titulo']) ?></span>
-                            </span>
+                                <i class="bi bi-arrow-right" style="font-size:.72rem;color:#b45309;margin-left:auto;"></i>
+                            </a>
                         </li>
                         <?php endforeach; ?>
                     </ul>
