@@ -53,3 +53,12 @@ $routes->group('ideias', ['namespace' => 'App\\Controllers'], function ($routes)
     $routes->post('(:num)/deletar',    'Ideias::deletar/$1');
 });
 
+// ── Módulo: Inteligência (regras extraídas + comparativo) ─────────
+$routes->group('inteligencia', ['namespace' => 'App\\Controllers'], function ($routes) {
+    $routes->get('/',                'Inteligencia::index');
+    $routes->get('regras',          'Inteligencia::regras');
+    $routes->get('comparar',        'Inteligencia::comparar');
+    $routes->get('servico/(:any)',  'Inteligencia::servico/$1');
+});
+
+

@@ -24,6 +24,9 @@
         <span class="brand-cc">Correios</span><span class="brand-com">Comercial</span>
     </a>
     <nav class="home-topnav">
+        <a href="<?= base_url('inteligencia') ?>" class="topnav-link">
+            <i class="bi bi-cpu"></i> Inteligência
+        </a>
         <a href="<?= base_url('eixos') ?>" class="topnav-link">
             <i class="bi bi-grid-1x2"></i> Eixos
         </a>
