@@ -1,0 +1,395 @@
+/* ================================================================
+   CorreiosComercial — app.css
+   Estilos customizados sobre o Bootstrap 5
+   ================================================================ */
+
+/* --- Variáveis ------------------------------------------------- */
+:root {
+    --cor-primaria:     #003F88;   /* azul Correios */
+    --cor-secundaria:   #F5A800;   /* amarelo Correios */
+    --cor-sidebar-bg:   #0d1b2e;
+    --cor-sidebar-text: #c9d4e0;
+    --cor-sidebar-hover:#1e3a5f;
+    --cor-sidebar-active:#003F88;
+    --sidebar-width:    280px;
+    --topbar-height:    56px;
+    --tree-indent:      1.5rem;
+}
+
+/* --- Reset ---------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f0f4f8;
+    color: #1a2332;
+}
+
+/* --- Topbar --------------------------------------------------- */
+.topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--topbar-height);
+    background: var(--cor-primaria);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    z-index: 1040;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+}
+.topbar-brand .brand-accent {
+    color: var(--cor-secundaria);
+}
+.topbar-brand img {
+    height: 32px;
+}
+.topbar-nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.topbar-nav .nav-link {
+    color: rgba(255,255,255,.8);
+    font-size: .875rem;
+    padding: .35rem .75rem;
+    border-radius: .375rem;
+    transition: background .15s, color .15s;
+}
+.topbar-nav .nav-link:hover {
+    background: rgba(255,255,255,.12);
+    color: #fff;
+}
+.topbar-nav .nav-link.active {
+    background: var(--cor-secundaria);
+    color: #0d1b2e;
+    font-weight: 600;
+}
+
+/* --- Sidebar -------------------------------------------------- */
+.sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    width: var(--sidebar-width);
+    bottom: 0;
+    background: var(--cor-sidebar-bg);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1030;
+    transition: transform .3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+
+.sidebar-header {
+    padding: 1rem 1.25rem .5rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.35);
+}
+
+/* Árvore de navegação lateral */
+.tree { list-style: none; padding: 0; margin: 0; }
+.tree .tree-item { margin: 0; }
+.tree .tree-link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem 1.25rem;
+    color: var(--cor-sidebar-text);
+    text-decoration: none;
+    font-size: .875rem;
+    border-left: 3px solid transparent;
+    transition: background .15s, border-color .15s, color .15s;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tree .tree-link:hover {
+    background: var(--cor-sidebar-hover);
+    color: #fff;
+}
+.tree .tree-link.active {
+    background: rgba(0,63,136,.4);
+    border-left-color: var(--cor-secundaria);
+    color: #fff;
+    font-weight: 600;
+}
+.tree .tree-link .bi { font-size: .9rem; flex-shrink: 0; }
+.tree .tree-link .toggle-icon {
+    margin-left: auto;
+    font-size: .7rem;
+    transition: transform .2s;
+}
+.tree .tree-link[aria-expanded="true"] .toggle-icon {
+    transform: rotate(90deg);
+}
+
+/* Sub-níveis */
+.tree .tree-children {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.tree .tree-children .tree-link {
+    padding-left: calc(1.25rem + var(--tree-indent));
+    font-size: .82rem;
+}
+.tree .tree-children .tree-children .tree-link {
+    padding-left: calc(1.25rem + var(--tree-indent) * 2);
+    font-size: .78rem;
+    color: rgba(201,212,224,.7);
+}
+.tree .tree-children .tree-children .tree-link:hover {
+    color: #fff;
+}
+
+/* Divisor */
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,.08);
+    margin: .5rem 1.25rem;
+}
+
+/* --- Layout principal ----------------------------------------- */
+.main-wrapper {
+    margin-left: var(--sidebar-width);
+    padding-top: var(--topbar-height);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.main-content {
+    flex: 1;
+    padding: 2rem 2rem 3rem;
+}
+
+/* --- Breadcrumb ----------------------------------------------- */
+.breadcrumb-bar {
+    background: #fff;
+    border-bottom: 1px solid #dde3ea;
+    padding: .6rem 2rem;
+    display: flex;
+    align-items: center;
+}
+.breadcrumb { margin: 0; }
+.breadcrumb-item + .breadcrumb-item::before { color: #999; }
+
+/* --- Cards de listagem ---------------------------------------- */
+.card-manual {
+    background: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: .75rem;
+    padding: 1.5rem;
+    transition: box-shadow .2s, transform .2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.card-manual:hover {
+    box-shadow: 0 8px 24px rgba(0,63,136,.12);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+}
+.card-manual .manual-badge {
+    display: inline-block;
+    background: var(--cor-primaria);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: .2rem .65rem;
+    border-radius: 99px;
+    margin-bottom: .75rem;
+}
+.card-manual h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a2332;
+    margin-bottom: .5rem;
+    line-height: 1.3;
+}
+.card-manual .manual-meta {
+    font-size: .8rem;
+    color: #6b7a8d;
+}
+.card-manual .manual-meta .bi { margin-right: .25rem; }
+
+/* --- Árvore principal (view arvore) --------------------------- */
+.tree-container {
+    background: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: .75rem;
+    padding: 1.5rem;
+}
+.tree-main { list-style: none; padding: 0; margin: 0; }
+.tree-main li { margin: 0; }
+
+/* Nível: Módulo */
+.tree-modulo-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem .75rem;
+    border-radius: .5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+}
+.tree-modulo-header:hover { background: #f0f4f8; }
+.tree-modulo-header .badge-modulo {
+    background: var(--cor-primaria);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    padding: .2rem .55rem;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+.tree-modulo-header .modulo-titulo {
+    font-weight: 600;
+    font-size: .92rem;
+    color: #1a2332;
+    flex: 1;
+}
+.tree-modulo-header .toggle-chevron {
+    color: #6b7a8d;
+    font-size: .8rem;
+    transition: transform .2s;
+}
+.tree-modulo-header[aria-expanded="true"] .toggle-chevron { transform: rotate(90deg); }
+
+/* Nível: Capítulo */
+.tree-capitulo-list { list-style: none; padding: 0; margin: 0 0 .25rem 2.25rem; }
+.tree-capitulo-item { margin: 0; }
+.tree-capitulo-header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .5rem .75rem;
+    border-radius: .375rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+    text-decoration: none;
+    color: inherit;
+}
+.tree-capitulo-header:hover { background: #f0f4f8; text-decoration: none; color: inherit; }
+.tree-capitulo-header.has-link:hover { color: var(--cor-primaria); }
+.tree-capitulo-header .badge-capitulo {
+    background: #e8f0fe;
+    color: var(--cor-primaria);
+    font-size: .62rem;
+    font-weight: 700;
+    padding: .15rem .5rem;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+.tree-capitulo-header .capitulo-titulo {
+    font-size: .85rem;
+    color: #1a2332;
+    flex: 1;
+    line-height: 1.3;
+}
+
+/* Nível: Anexo */
+.tree-anexo-list { list-style: none; padding: 0; margin: 0 0 .25rem 2rem; }
+.tree-anexo-item { margin: 0; }
+.tree-anexo-link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .75rem;
+    border-radius: .375rem;
+    text-decoration: none;
+    color: #4a5568;
+    font-size: .8rem;
+    transition: background .15s, color .15s;
+}
+.tree-anexo-link:hover {
+    background: #fef9ec;
+    color: var(--cor-primaria);
+    text-decoration: none;
+}
+.tree-anexo-link .badge-anexo {
+    background: #fff8e1;
+    color: #b45309;
+    font-size: .6rem;
+    font-weight: 700;
+    padding: .1rem .45rem;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+
+/* --- Page header ---------------------------------------------- */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+.page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a2332;
+    margin: 0;
+}
+.page-header .subtitle {
+    color: #6b7a8d;
+    font-size: .9rem;
+    margin-top: .25rem;
+}
+
+/* --- Stats ---------------------------------------------------- */
+.stat-card {
+    background: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: .75rem;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.stat-card .stat-icon {
+    width: 48px; height: 48px;
+    border-radius: .5rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #1a2332;
+}
+.stat-card .stat-label {
+    font-size: .78rem;
+    color: #6b7a8d;
+    margin-top: .2rem;
+}
+
+/* --- Responsividade ------------------------------------------- */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(calc(-1 * var(--sidebar-width)));
+    }
+    .sidebar.show {
+        transform: translateX(0);
+        box-shadow: 4px 0 20px rgba(0,0,0,.3);
+    }
+    .main-wrapper { margin-left: 0; }
+    .main-content { padding: 1.25rem; }
+    .breadcrumb-bar { padding: .5rem 1.25rem; }
+}
