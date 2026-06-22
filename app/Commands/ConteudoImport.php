@@ -49,17 +49,16 @@ class ConteudoImport extends BaseCommand
     // ================================================================
     public function run(array $params): void
     {
-        $this->tmpDir       = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ooo_tmp';
-        $this->db           = \Config\Database::connect();
+        $this->tmpDir        = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ooo_tmp';
+        $this->db            = \Config\Database::connect();
         $this->capituloModel = new CapituloModel();
-        $this->anexoModel   = new AnexoModel();
-        $this->itemModel    = new ItemModel();
+        $this->anexoModel    = new AnexoModel();
+        $this->itemModel     = new ItemModel();
 
         if (! is_dir($this->tmpDir)) {
             mkdir($this->tmpDir, 0777, true);
         }
 
-        // Validar LibreOffice
         if (! file_exists($this->soffice)) {
             CLI::error("LibreOffice não encontrado em: {$this->soffice}");
             return;
@@ -82,16 +81,14 @@ class ConteudoImport extends BaseCommand
             CLI::write('   Feito.', 'green');
         }
 
-        // ── Modo: documento específico ───────────────────────────────
         if ($docOpt !== null) {
             [$tipo, $id] = explode(':', $docOpt);
             $this->processarDocumento($tipo, (int) $id);
         } else {
-            // ── Modo: todos os documentos com arquivo vinculado ──────
             $this->processarTodos($limite);
         }
 
-        // ── Limpar arquivos temporários ──────────────────────────────
+        // Limpar TXTs temporários
         foreach (glob($this->tmpDir . DIRECTORY_SEPARATOR . '*.txt') as $f) {
             @unlink($f);
         }
@@ -107,19 +104,15 @@ class ConteudoImport extends BaseCommand
     }
 
     // ================================================================
-    // Processa todos os documentos com arquivo vinculado
-    // ================================================================
     private function processarTodos(int $limite): void
     {
-        // Capítulos com arquivo ainda sem itens
-        $subCap = "SELECT doc_id FROM itens WHERE doc_tipo = 'capitulo'";
+        $subCap    = "SELECT doc_id FROM itens WHERE doc_tipo = 'capitulo'";
         $capitulos = $this->capituloModel
             ->where('arquivo_caminho IS NOT NULL', null, false)
             ->where("id NOT IN ($subCap)", null, false)
             ->orderBy('id', 'ASC')
             ->findAll();
 
-        // Anexos com arquivo ainda sem itens
         $subAnx = "SELECT doc_id FROM itens WHERE doc_tipo = 'anexo'";
         $anexos = $this->anexoModel
             ->where('arquivo_caminho IS NOT NULL', null, false)
@@ -132,13 +125,11 @@ class ConteudoImport extends BaseCommand
         CLI::write('');
 
         $processados = 0;
-
         foreach ($capitulos as $cap) {
             if ($processados >= $limite) break;
             $this->processarDocumento('capitulo', (int) $cap['id'], $cap);
             $processados++;
         }
-
         foreach ($anexos as $anx) {
             if ($processados >= $limite) break;
             $this->processarDocumento('anexo', (int) $anx['id'], $anx);
@@ -146,8 +137,6 @@ class ConteudoImport extends BaseCommand
         }
     }
 
-    // ================================================================
-    // Processa um único documento
     // ================================================================
     private function processarDocumento(string $tipo, int $id, ?array $doc = null): void
     {
@@ -164,14 +153,13 @@ class ConteudoImport extends BaseCommand
 
         $caminho = $doc['arquivo_caminho'];
         if (! file_exists($caminho)) {
-            CLI::write("   ✗  {$tipo} #{$id}: arquivo não encontrado: " . basename($caminho), 'light_red');
+            CLI::write("   ✗  {$tipo} #{$id}: não encontrado: " . basename($caminho), 'light_red');
             $this->cntErros++;
             return;
         }
 
         CLI::write("   → {$tipo} #{$id}: " . basename($caminho));
 
-        // Converter para TXT via LibreOffice
         $txtPath = $this->converterParaTxt($caminho);
         if ($txtPath === null) {
             CLI::write("     ✗  Falha na conversão", 'light_red');
@@ -179,15 +167,12 @@ class ConteudoImport extends BaseCommand
             return;
         }
 
-        // Ler e converter encoding
         $raw  = file_get_contents($txtPath);
         $text = iconv('Windows-1252', 'UTF-8//IGNORE', $raw);
         @unlink($txtPath);
 
-        // Parsear itens
         $itens = $this->parsearItens($text, $tipo, $id);
 
-        // Inserir em lote
         if (! empty($itens)) {
             $this->inserirItens($itens);
             CLI::write("     ✔  " . count($itens) . " itens extraídos.", 'green');
@@ -200,20 +185,17 @@ class ConteudoImport extends BaseCommand
     }
 
     // ================================================================
-    // Converte arquivo .doc/.docx → .txt via LibreOffice headless
-    // ================================================================
     private function converterParaTxt(string $caminhoDoc): ?string
     {
-        $extensao = strtolower(pathinfo($caminhoDoc, PATHINFO_EXTENSION));
-        $nomeBase = pathinfo($caminhoDoc, PATHINFO_FILENAME);
+        $extensao    = strtolower(pathinfo($caminhoDoc, PATHINFO_EXTENSION));
+        $nomeBase    = pathinfo($caminhoDoc, PATHINFO_FILENAME);
         $txtEsperado = $this->tmpDir . DIRECTORY_SEPARATOR . $nomeBase . '.txt';
 
-        // Se já convertido, reusar
         if (file_exists($txtEsperado) && filesize($txtEsperado) > 0) {
             return $txtEsperado;
         }
 
-        // Para .docx podemos ler direto sem conversão
+        // .docx: leitura direta via ZipArchive
         if ($extensao === 'docx') {
             $txt = $this->lerDocxDireto($caminhoDoc);
             if ($txt !== null) {
@@ -222,7 +204,7 @@ class ConteudoImport extends BaseCommand
             }
         }
 
-        // LibreOffice headless
+        // .doc: LibreOffice headless
         $cmd = sprintf(
             '"%s" --headless --norestore --convert-to txt --outdir "%s" "%s" 2>&1',
             $this->soffice,
@@ -230,26 +212,19 @@ class ConteudoImport extends BaseCommand
             $caminhoDoc
         );
 
-        // Matar instâncias presas
         exec('taskkill /F /IM soffice.exe /T >nul 2>&1');
         sleep(1);
-
         exec($cmd, $output, $code);
 
-        if ($code !== 0 || ! file_exists($txtEsperado) || filesize($txtEsperado) === 0) {
-            // Tentar uma vez mais
+        if (! file_exists($txtEsperado) || filesize($txtEsperado) === 0) {
             sleep(2);
-            exec($cmd, $output, $code);
+            exec($cmd, $output2, $code2);
         }
 
-        return (file_exists($txtEsperado) && filesize($txtEsperado) > 0)
-            ? $txtEsperado
-            : null;
+        return (file_exists($txtEsperado) && filesize($txtEsperado) > 0) ? $txtEsperado : null;
     }
 
-    /**
-     * Lê texto de um .docx diretamente via ZipArchive (sem LibreOffice)
-     */
+    // ================================================================
     private function lerDocxDireto(string $path): ?string
     {
         $zip = new \ZipArchive();
@@ -257,14 +232,13 @@ class ConteudoImport extends BaseCommand
 
         $xml = $zip->getFromName('word/document.xml');
         $zip->close();
-
         if (! $xml) return null;
 
         $dom = new \DOMDocument();
         if (! @$dom->loadXML($xml)) return null;
 
-        $ns    = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-        $paras = $dom->getElementsByTagNameNS($ns, 'p');
+        $ns     = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+        $paras  = $dom->getElementsByTagNameNS($ns, 'p');
         $linhas = [];
 
         foreach ($paras as $p) {
@@ -272,14 +246,14 @@ class ConteudoImport extends BaseCommand
             foreach ($p->getElementsByTagNameNS($ns, 't') as $t) {
                 $txt .= $t->textContent;
             }
-            $linhas[] = $txt; // mantém linhas vazias para preservar espaçamento
+            $linhas[] = $txt;
         }
 
         return implode("\r\n", $linhas);
     }
 
     // ================================================================
-    // Parseia o texto convertido e retorna array de itens estruturados
+    // PARSER DE ITENS — 4 níveis hierárquicos
     // ================================================================
     private function parsearItens(string $text, string $docTipo, int $docId): array
     {
@@ -287,155 +261,156 @@ class ConteudoImport extends BaseCommand
         $itens  = [];
         $ordem  = 0;
 
-        // Pilha de contexto: [nivel => itemIndex]
-        $pilha = [];
+        // Pilha: nivel => índice no array $itens do último item daquele nível.
+        // TODOS os níveis inicializados como null — evita "Undefined array key".
+        $pilha = [1 => null, 2 => null, 3 => null, 4 => null];
 
-        // Buffer de conteúdo do item atual
-        $itemAtual     = null;
+        $itemAtual      = null;
         $conteudoBuffer = [];
 
         $fecharItem = function () use (&$itens, &$itemAtual, &$conteudoBuffer) {
             if ($itemAtual !== null) {
-                $itens[$itemAtual]['conteudo'] = implode("\n", $conteudoBuffer);
-                $itemAtual    = null;
+                $itens[$itemAtual]['conteudo'] = implode("\n", array_filter(
+                    $conteudoBuffer,
+                    fn ($l) => $l !== ''
+                ));
+                $itemAtual      = null;
                 $conteudoBuffer = [];
             }
         };
 
         foreach ($linhas as $linha) {
-            // Preservar linha original para conteúdo
             $linhaTrim  = rtrim($linha);
             $textoLimpo = trim($linhaTrim);
-            $indent     = strlen($linhaTrim) - strlen(ltrim($linhaTrim));
 
-            // ── Item nível 1: "    1 TITULO"  (indent 0-4, número simples) ──
-            if (preg_match('/^\s{0,4}(\d+)\s{1,3}([A-ZÁÀÂÃÉÊÍÓÔÕÚÜÇ].{2,})/u', $linha, $m)) {
-                $fecharItem();
-                $num    = $m[1];
-                $titulo = trim($m[2]);
-                $paiId  = null;
-
-                $novoIdx = count($itens);
-                $itens[] = [
-                    'doc_tipo' => $docTipo,
-                    'doc_id'   => $docId,
-                    'pai_id'   => null,   // pai_id resolvido após inserção
-                    'nivel'    => 1,
-                    'numero'   => $num,
-                    'titulo'   => $titulo,
-                    'conteudo' => '',
-                    'ordem'    => $ordem++,
-                    '_idx'     => $novoIdx,
-                ];
-                $pilha[1]  = $novoIdx;
-                $pilha[2]  = null;
-                $pilha[3]  = null;
-                $itemAtual = $novoIdx;
+            // ── Linha vazia ────────────────────────────────────────────────
+            if ($textoLimpo === '') {
+                if ($itemAtual !== null) {
+                    $conteudoBuffer[] = '';
+                }
                 continue;
             }
 
-            // ── Item nível 2: "        N.N texto" (indent ~8) ──────────────
+            // ── Nível 1 — "  1 TITULO" (dígito + espaço + maiúscula) ──────
+            if (preg_match('/^\s{0,4}(\d+)\s{1,3}([A-ZÁÀÂÃÉÊÍÓÔÕÚÜÇÑ].{1,})/u', $linha, $m)) {
+                $fecharItem();
+                $idx = count($itens);
+                $itens[] = [
+                    'doc_tipo' => $docTipo, 'doc_id' => $docId,
+                    'pai_id'   => null,     'nivel'  => 1,
+                    'numero'   => $m[1],    'titulo' => trim($m[2]),
+                    'conteudo' => '',        'ordem'  => $ordem++,
+                    '_idx' => $idx,
+                ];
+                $pilha[1] = $idx;
+                $pilha[2] = $pilha[3] = $pilha[4] = null;
+                $itemAtual = $idx;
+                continue;
+            }
+
+            // ── Nível 1 — "  1) TITULO" (dígito + parêntese) ─────────────
+            if (preg_match('/^\s{0,6}(\d+)\)\s+(\S.{1,})/u', $linha, $m)) {
+                $fecharItem();
+                $idx = count($itens);
+                $itens[] = [
+                    'doc_tipo' => $docTipo, 'doc_id' => $docId,
+                    'pai_id'   => null,     'nivel'  => 1,
+                    'numero'   => $m[1],    'titulo' => trim($m[2]),
+                    'conteudo' => '',        'ordem'  => $ordem++,
+                    '_idx' => $idx,
+                ];
+                $pilha[1] = $idx;
+                $pilha[2] = $pilha[3] = $pilha[4] = null;
+                $itemAtual = $idx;
+                continue;
+            }
+
+            // ── Nível 2 — "        N.N texto" ────────────────────────────
             if (preg_match('/^\s{4,10}(\d+\.\d+)\s+(.+)/u', $linha, $m)) {
                 $fecharItem();
-                $num    = $m[1];
-                $titulo = trim($m[2]);
-                $paiKey = 1;
-
-                $novoIdx = count($itens);
+                $idx = count($itens);
                 $itens[] = [
-                    'doc_tipo' => $docTipo,
-                    'doc_id'   => $docId,
-                    'pai_id'   => null, // resolvido depois
-                    'nivel'    => 2,
-                    'numero'   => $num,
-                    'titulo'   => $titulo,
-                    'conteudo' => '',
-                    'ordem'    => $ordem++,
-                    '_idx'     => $novoIdx,
-                    '_pai_key' => $paiKey,
+                    'doc_tipo' => $docTipo, 'doc_id'   => $docId,
+                    'pai_id'   => null,     'nivel'    => 2,
+                    'numero'   => $m[1],    'titulo'   => trim($m[2]),
+                    'conteudo' => '',        'ordem'    => $ordem++,
+                    '_idx' => $idx, '_pai_key' => 1,
                 ];
-                $pilha[2]  = $novoIdx;
-                $pilha[3]  = null;
-                $itemAtual = $novoIdx;
+                $pilha[2] = $idx;
+                $pilha[3] = $pilha[4] = null;
+                $itemAtual = $idx;
                 continue;
             }
 
-            // ── Item nível 3: "            N.N.N texto" (indent ~12) ────────
+            // ── Nível 3 — "            N.N.N texto" ──────────────────────
             if (preg_match('/^\s{10,16}(\d+\.\d+\.\d+)\s+(.+)/u', $linha, $m)) {
                 $fecharItem();
-                $num    = $m[1];
-                $titulo = trim($m[2]);
-
-                $novoIdx = count($itens);
+                $idx = count($itens);
                 $itens[] = [
-                    'doc_tipo' => $docTipo,
-                    'doc_id'   => $docId,
-                    'pai_id'   => null,
-                    'nivel'    => 3,
-                    'numero'   => $num,
-                    'titulo'   => $titulo,
-                    'conteudo' => '',
-                    'ordem'    => $ordem++,
-                    '_idx'     => $novoIdx,
-                    '_pai_key' => 2,
+                    'doc_tipo' => $docTipo, 'doc_id'   => $docId,
+                    'pai_id'   => null,     'nivel'    => 3,
+                    'numero'   => $m[1],    'titulo'   => trim($m[2]),
+                    'conteudo' => '',        'ordem'    => $ordem++,
+                    '_idx' => $idx, '_pai_key' => 2,
                 ];
-                $pilha[3]  = $novoIdx;
-                $itemAtual = $novoIdx;
+                $pilha[3] = $idx;
+                $pilha[4] = null;
+                $itemAtual = $idx;
                 continue;
             }
 
-            // ── Alínea: "    a) texto" (indent 2-6) ──────────────────────────
+            // ── Alínea — "    a) texto" ───────────────────────────────────
             if (preg_match('/^\s{2,8}([a-z])\)\s+(.+)/u', $linha, $m)) {
                 $fecharItem();
-                $num    = $m[1];
-                $titulo = trim($m[2]);
 
-                // Pai = item atual mais próximo
-                $paiKey = $pilha[3] !== null ? 3 : ($pilha[2] !== null ? 2 : 1);
+                // Pai = nível mais profundo disponível na pilha
+                if (($pilha[3] ?? null) !== null) {
+                    $paiKey = 3;
+                } elseif (($pilha[2] ?? null) !== null) {
+                    $paiKey = 2;
+                } elseif (($pilha[1] ?? null) !== null) {
+                    $paiKey = 1;
+                } else {
+                    $paiKey = null; // sem pai identificado
+                }
 
-                $novoIdx = count($itens);
+                $idx = count($itens);
                 $itens[] = [
-                    'doc_tipo' => $docTipo,
-                    'doc_id'   => $docId,
-                    'pai_id'   => null,
-                    'nivel'    => 4,
-                    'numero'   => $num,
-                    'titulo'   => $titulo,
-                    'conteudo' => '',
-                    'ordem'    => $ordem++,
-                    '_idx'     => $novoIdx,
-                    '_pai_key' => $paiKey,
+                    'doc_tipo'  => $docTipo, 'doc_id'   => $docId,
+                    'pai_id'    => null,     'nivel'    => 4,
+                    'numero'    => $m[1],    'titulo'   => trim($m[2]),
+                    'conteudo'  => '',        'ordem'    => $ordem++,
+                    '_idx' => $idx, '_pai_key' => $paiKey,
                 ];
-                $itemAtual = $novoIdx;
+                $pilha[4] = $idx;
+                $itemAtual = $idx;
                 continue;
             }
 
-            // ── Conteúdo livre (continua item atual) ─────────────────────────
-            if ($itemAtual !== null && $textoLimpo !== '') {
+            // ── Conteúdo livre ────────────────────────────────────────────
+            if ($itemAtual !== null) {
                 $conteudoBuffer[] = $textoLimpo;
             }
         }
 
         $fecharItem();
 
-        // Resolver pai_id usando índices relativos (_pai_key → pilha)
-        // Refazer com pilha real
+        // ── Resolver pai_id usando pilha de execução ──────────────────
         $pilhaReal = [1 => null, 2 => null, 3 => null, 4 => null];
+
         foreach ($itens as &$item) {
-            $nivel = (int) $item['nivel'];
+            $nivel  = (int) $item['nivel'];
             $paiKey = $item['_pai_key'] ?? null;
 
-            if ($paiKey !== null && isset($pilhaReal[$paiKey])) {
+            if ($paiKey !== null && ($pilhaReal[$paiKey] ?? null) !== null) {
                 $item['_pai_idx'] = $pilhaReal[$paiKey];
             }
 
-            $pilhaReal[$nivel] = $item['_idx'];
-            // Limpar níveis filhos ao subir
+            $pilhaReal[$nivel] = $item['_idx'] ?? null;
             for ($n = $nivel + 1; $n <= 4; $n++) {
                 $pilhaReal[$n] = null;
             }
 
-            // Limpar campos internos
             unset($item['_idx'], $item['_pai_key']);
         }
 
@@ -443,13 +418,9 @@ class ConteudoImport extends BaseCommand
     }
 
     // ================================================================
-    // Insere itens em lote, resolvendo pai_id via _pai_idx
-    // ================================================================
     private function inserirItens(array $itens): void
     {
-        // Mapa: posição no array => id real no banco
         $idMap = [];
-        $db    = $this->db;
 
         foreach ($itens as $pos => $item) {
             $paiId = null;
