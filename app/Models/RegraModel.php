@@ -100,7 +100,7 @@ class RegraModel extends Model
             foreach ($servicos as $srv) {
                 $where = $srv === '_geral_' ? 'servico IS NULL' : "servico = " . $this->db->escape($srv);
                 $rows = $this->db->query(
-                    "SELECT descricao, valor_numerico, unidade, fonte, item_id
+                    "SELECT descricao, valor_numerico, unidade, fonte, item_id, doc_tipo, doc_id
                      FROM regras
                      WHERE tipo = ? AND {$where}
                      ORDER BY valor_numerico

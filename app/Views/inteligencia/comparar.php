@@ -96,7 +96,7 @@ $breadcrumbs = [
                     <div style="font-size:.7rem;color:#94a3b8;margin-top:.15rem;">
                         <i class="bi bi-geo-alt"></i>
                         <?= esc($row['fonte']) ?>
-                        <a href="<?= base_url('manuais/' . ($row['doc_tipo'] ?? 'capitulo') . '/' . $row['doc_id'] ?? '') ?>"
+                        <a href="<?= base_url('manuais/' . ($row['doc_tipo'] ?? 'capitulo') . '/' . ($row['doc_id'] ?? '')) ?>"
                            target="_blank" class="ms-1" style="color:var(--cor-primaria);">
                             <i class="bi bi-box-arrow-up-right" style="font-size:.65rem;"></i>
                         </a>
