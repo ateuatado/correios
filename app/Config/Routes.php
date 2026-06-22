@@ -32,3 +32,24 @@ $routes->group('manuais', ['namespace' => 'App\Controllers'], function ($routes)
     // API JSON — contexto para LLM (futuro)
     $routes->get('api/item/(:num)',   'Manuais::apiItem/$1');
 });
+
+// ── Módulo: Eixos (CRUD dos pilares) ─────────────────────────────
+$routes->group('eixos', ['namespace' => 'App\\Controllers'], function ($routes) {
+    $routes->get('/',              'Eixos::index');
+    $routes->get('novo',           'Eixos::novo');
+    $routes->post('criar',         'Eixos::criar');
+    $routes->get('editar/(:num)',  'Eixos::editar/$1');
+    $routes->post('atualizar/(:num)', 'Eixos::atualizar/$1');
+    $routes->post('deletar/(:num)',   'Eixos::deletar/$1');
+});
+
+// ── Módulo: Ideias (CRUD com campos JSON) ────────────────────────
+$routes->group('ideias', ['namespace' => 'App\\Controllers'], function ($routes) {
+    $routes->get('nova/(:num)',         'Ideias::nova/$1');
+    $routes->post('salvar',            'Ideias::salvar');
+    $routes->get('(:num)',             'Ideias::show/$1');
+    $routes->get('(:num)/editar',      'Ideias::editar/$1');
+    $routes->post('(:num)/atualizar',  'Ideias::atualizar/$1');
+    $routes->post('(:num)/deletar',    'Ideias::deletar/$1');
+});
+
