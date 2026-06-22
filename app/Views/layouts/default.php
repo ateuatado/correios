@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap-icons.min.css') ?>">
     <!-- App CSS -->
     <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <!-- Leitura + Busca CSS -->
+    <link rel="stylesheet" href="<?= base_url('assets/css/leitura.css') ?>">
 </head>
 <body>
 
@@ -41,6 +43,12 @@
             <a href="<?= base_url('manuais') ?>" class="tree-link">
                 <i class="bi bi-journal-bookmark-fill"></i>
                 <span>Manuais</span>
+            </a>
+        </li>
+        <li class="tree-item">
+            <a href="<?= base_url('manuais/buscar') ?>" class="tree-link">
+                <i class="bi bi-search"></i>
+                <span>Pesquisar</span>
             </a>
         </li>
     </ul>
@@ -102,7 +110,7 @@
     </div>
     <?php endif; ?>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content">
         <?= $this->renderSection('content') ?>
     </main>
 
