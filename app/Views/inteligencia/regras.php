@@ -99,19 +99,21 @@ $totalPages   = ceil($total / $perPage);
                 <tr>
                     <th style="width:110px;">Tipo</th>
                     <th style="width:90px;">Serviço</th>
-                    <th>Descrição / Contexto</th>
+                    <th>Descrição / Interpretação IA</th>
                     <th style="width:80px;">Valor</th>
                     <th style="width:160px;">Fonte</th>
-                    <th style="width:50px;"></th>
+                    <th style="width:70px;"></th>
                 </tr>
             </thead>
             <tbody>
             <?php foreach ($regras as $r): ?>
             <?php
-            $ti = $tipoInfo[$r['tipo']] ?? $tipoInfo['outro'];
-            $srv = $r['servico'] ?? null;
+            $ti    = $tipoInfo[$r['tipo']] ?? $tipoInfo['outro'];
+            $srv   = $r['servico'] ?? null;
+            $ia    = ! empty($r['interpretacao']) ? json_decode($r['interpretacao'], true) : null;
+            $rowId = 'ia-' . $r['id'];
             ?>
-            <tr>
+            <tr class="regra-row" data-id="<?= $r['id'] ?>">
                 <td>
                     <span class="regra-tipo-badge"
                           style="background:<?= $ti['bg'] ?>;color:<?= $ti['cor'] ?>;">
@@ -128,10 +130,72 @@ $totalPages   = ceil($total / $perPage);
                     <?php endif; ?>
                 </td>
                 <td>
+                    <!-- Descrição bruta -->
                     <div style="font-weight:600;color:#1e293b;line-height:1.4;">
                         <?= esc(mb_substr($r['descricao'], 0, 180)) ?>
                     </div>
-                    <?php if (! empty($r['contexto'])): ?>
+                    <?php if ($ia): ?>
+                    <!-- Resumo executivo da IA -->
+                    <div class="ia-resumo">
+                        <i class="bi bi-stars" style="color:#F5A800;"></i>
+                        <?= esc($ia['resumo_executivo'] ?? '') ?>
+                    </div>
+                    <!-- Painel expandido (oculto) -->
+                    <div id="<?= $rowId ?>" class="ia-panel" style="display:none;">
+                        <?php if (! empty($ia['o_que_e'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">O que é</span>
+                            <?= esc($ia['o_que_e']) ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['quando_aplica'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">Quando aplica</span>
+                            <?= esc($ia['quando_aplica']) ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['quem_se_aplica'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">Para quem</span>
+                            <?= esc($ia['quem_se_aplica']) ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['impacto_comercial'])): ?>
+                        <div class="ia-field ia-field-destaque">
+                            <span class="ia-label">Impacto comercial</span>
+                            <?= esc($ia['impacto_comercial']) ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['condicoes'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">Condições</span>
+                            <ul style="margin:.25rem 0 0 1rem;padding:0;">
+                            <?php foreach ($ia['condicoes'] as $c): ?>
+                                <li><?= esc($c) ?></li>
+                            <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['restricoes'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">Restrições</span>
+                            <ul style="margin:.25rem 0 0 1rem;padding:0;">
+                            <?php foreach ($ia['restricoes'] as $c): ?>
+                                <li><?= esc($c) ?></li>
+                            <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (! empty($ia['palavras_chave'])): ?>
+                        <div class="ia-field">
+                            <span class="ia-label">Tags</span>
+                            <?php foreach ($ia['palavras_chave'] as $tag): ?>
+                            <span class="ia-tag"><?= esc($tag) ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php elseif (! empty($r['contexto'])): ?>
                     <div style="font-size:.73rem;color:#94a3b8;margin-top:.2rem;line-height:1.35;font-style:italic;">
                         <?= esc(mb_substr($r['contexto'], 0, 140)) ?>...
                     </div>
@@ -152,7 +216,13 @@ $totalPages   = ceil($total / $perPage);
                         <?= esc($r['fonte']) ?>
                     </span>
                 </td>
-                <td>
+                <td style="white-space:nowrap;">
+                    <?php if ($ia): ?>
+                    <button class="btn btn-sm btn-ia toggle-ia" data-target="<?= $rowId ?>"
+                            title="Ver interpretação IA" style="padding:.2rem .5rem;">
+                        <i class="bi bi-stars"></i>
+                    </button>
+                    <?php endif; ?>
                     <a href="<?= base_url('manuais/' . $r['doc_tipo'] . '/' . $r['doc_id']) ?>"
                        target="_blank" title="Ver no MANCAT" class="btn btn-sm btn-outline-secondary" style="padding:.2rem .5rem;">
                         <i class="bi bi-box-arrow-up-right"></i>
@@ -216,5 +286,72 @@ $totalPages   = ceil($total / $perPage);
     white-space: nowrap;
 }
 .servico-chip:hover { background: var(--cor-primaria); color: white; border-color: var(--cor-primaria); }
+
+/* ── Interpretação IA ────────────────────────────────── */
+.ia-resumo {
+    font-size: .78rem;
+    color: #92400e;
+    background: rgba(245,168,0,.08);
+    border-left: 3px solid #F5A800;
+    padding: .3rem .6rem;
+    margin-top: .35rem;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.45;
+}
+.ia-panel {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: .75rem;
+    margin-top: .5rem;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+.ia-field {
+    margin-bottom: .5rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid #e0f2fe;
+}
+.ia-field:last-child { border-bottom: none; margin-bottom: 0; }
+.ia-field-destaque { background: rgba(245,168,0,.07); border-radius: 6px; padding: .4rem .6rem; }
+.ia-label {
+    display: block;
+    font-size: .65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #0284c7;
+    margin-bottom: .15rem;
+}
+.ia-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 10px;
+    padding: .05rem .45rem;
+    font-size: .68rem;
+    font-weight: 600;
+    margin: .1rem;
+}
+.btn-ia {
+    background: rgba(245,168,0,.12);
+    color: #92400e;
+    border: 1px solid rgba(245,168,0,.3);
+}
+.btn-ia:hover, .btn-ia.active {
+    background: #F5A800;
+    color: white;
+    border-color: #F5A800;
+}
 </style>
+<script>
+document.querySelectorAll('.toggle-ia').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const panel = document.getElementById(btn.dataset.target);
+        const visible = panel.style.display !== 'none';
+        panel.style.display = visible ? 'none' : 'block';
+        btn.classList.toggle('active', !visible);
+    });
+});
+</script>
 <?= $this->endSection() ?>

@@ -148,10 +148,10 @@ Gera ~715 regras estruturadas na tabela `regras`.
 | Migrations (estrutura das tabelas) | ✅ Sim | `php spark migrate` |
 | Seeder dos 8 eixos | ✅ Sim | `php spark db:seed EixosSeeder` |
 | Assets (Bootstrap, CSS, JS) | ✅ Sim | — |
-| `.env` (configurações locais) | ❌ Não | Criar manualmente (passo 4) |
-| `vendor/` (Composer) | ❌ Não | `composer install` |
-| Dados do banco (8.910 itens) | ❌ Não | Importar via ETL ou restaurar dump |
-| Documentos Word do MANCAT | ❌ Não | Arquivo corporativo — copiar manualmente |
+| `.env` (configurações locais) | `.env` | Criar manualmente com as credenciais do banco |
+| `vendor/` | `composer install` |
+| **Dados do banco** (8.910 itens) | ✅ Disponível em `sql/correioscomercial.sql` — restaurar com `mysql -u root correioscomercial < sql/correioscomercial.sql` |
+| **Arquivos Word do MANCAT** | Copiar `C:\Correios\mancat` para a nova máquina (necessário apenas para reimportar) |
 
 ---
 
