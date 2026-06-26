@@ -60,5 +60,8 @@ $routes->group('inteligencia', ['namespace' => 'App\\Controllers'], function ($r
     $routes->get('comparar',        'Inteligencia::comparar');
     $routes->get('servico/(:any)',  'Inteligencia::servico/$1');
 });
-
+// ── Módulo: Assistente IA ────────────────────────────────────────
+$routes->get('assistente',        'Assistente::index');
+$routes->post('assistente/chat',  'Assistente::chat');
+$routes->get('assistente/limpar', 'Assistente::limpar');
 

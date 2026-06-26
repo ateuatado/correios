@@ -51,6 +51,18 @@
                 <span>Pesquisar</span>
             </a>
         </li>
+        <li class="tree-item">
+            <a href="<?= base_url('inteligencia') ?>" class="tree-link">
+                <i class="bi bi-bar-chart-steps"></i>
+                <span>Inteligência</span>
+            </a>
+        </li>
+        <li class="tree-item">
+            <a href="<?= base_url('assistente') ?>" class="tree-link" style="color:var(--cor-secundaria);font-weight:600;">
+                <i class="bi bi-stars"></i>
+                <span>Assistente IA</span>
+            </a>
+        </li>
     </ul>
 
     <?php if (isset($sidebar_manual)): ?>
